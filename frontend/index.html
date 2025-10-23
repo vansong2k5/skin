@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Da Liễu Demo</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; }
+    textarea, input, button { width: 100%; margin: 8px 0; padding: 8px; }
+    #result { border: 1px solid #ccc; padding: 10px; margin-top: 15px; background: #fafafa; }
+  </style>
+</head>
+<body>
+  <h2>🧠 Phân tích da bằng AI</h2>
+
+  <form id="skin-form">
+    <label>Mô tả triệu chứng:</label>
+    <textarea id="desc" rows="4" placeholder="Ví dụ: xuất hiện mụn đỏ, ngứa quanh mũi..."></textarea>
+
+    <label>Chọn ảnh vùng da:</label>
+    <input type="file" id="image" accept="image/*">
+
+    <button type="submit">Phân tích</button>
+  </form>
+
+  <div id="result">Kết quả sẽ hiển thị ở đây...</div>
+
+  <script>
+  const API_BASE = "http://127.0.0.1:5001";  // 🔧 sửa port 5000 → 5001
+
+  // Hàm nén ảnh nhanh
+  async function compressImage(file, maxW = 1024, quality = 0.82) {
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await img.decode();
+    const scale = Math.min(1, maxW / img.naturalWidth);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(new File([blob], file.name.replace(/\.\w+$/, '') + ".jpg", { type: "image/jpeg" }));
+      }, "image/jpeg", quality);
+    });
+  }
+
+  document.getElementById("skin-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = e.submitter;
+    const desc = document.getElementById("desc").value.trim();
+    const file = document.getElementById("image").files[0];
+    const result = document.getElementById("result");
+
+    result.textContent = "";
+    if (!desc || !file) {
+      result.textContent = "⚠️ Vui lòng nhập mô tả và chọn ảnh.";
+      return;
+    }
+
+    btn.disabled = true; btn.textContent = "⏳ Đang phân tích…";
+
+    try {
+      const small = await compressImage(file);
+      const fd = new FormData();
+      fd.append("description", desc);
+      fd.append("image", small, small.name);
+
+      const res = await fetch(`${API_BASE}/analyze`, { method: "POST", body: fd });
+      const data = await res.json();
+
+      if (!res.ok) {
+        result.textContent = data.error || `Lỗi ${res.status}`;
+        return;
+      }
+
+      result.innerHTML = `
+        <h3>📊 Kết quả sơ bộ</h3>
+        <p><b>Chẩn đoán khả dĩ:</b> ${data.diagnosis ?? "—"}</p>
+        <p><b>Độ tin cậy:</b> ${data.confidence ? (Math.round(data.confidence*100) + "%") : "—"}</p>
+        <p><b>Điều kiện có thể liên quan:</b> ${(data.likely_conditions || []).join(", ") || "—"}</p>
+        <p><b>Gợi ý bước tiếp theo:</b></p>
+        <ul>${(data.next_steps || []).map(s => `<li>${s}</li>`).join("") || "<li>—</li>"}</ul>
+        <small>${data.disclaimer || "⚕️ Kết quả chỉ mang tính tham khảo, không thay thế tư vấn y khoa."}</small>
+      `;
+    } catch (err) {
+      result.textContent = "❌ Lỗi mạng hoặc máy chủ. Thử lại sau.";
+      console.error(err);
+    } finally {
+      btn.disabled = false; btn.textContent = "Phân tích";
+    }
+  });
+  </script>
+</body>
+</html>
