@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 
 
-from backend.utils.image_processing import encode_image_to_base64
+from backend.utils.image_processing import assess_image_quality, encode_image_to_base64
 from backend.models.ai_model import analyze_skin_json
 from backend.models.image_feature_extractor import get_feature_extractor
 
@@ -28,9 +28,22 @@ def analyze():
     img  = request.files.get("image")
     if not desc or not img:
         return jsonify({"error": "Thiếu mô tả hoặc ảnh"}), 400
-    b64, mime, size_bytes, pil_image = encode_image_to_base64(img, return_image=True)  # JPEG + base64 sạch
+    b64, mime, size_bytes, pil_image = encode_image_to_base64(
+        img, return_image=True
+    )  # JPEG + base64 sạch
     if size_bytes > 12 * 1024 * 1024:
         return jsonify({"error": "Ảnh quá lớn sau khi nén"}), 413
+    quality = assess_image_quality(pil_image)
+    if not quality["is_acceptable"]:
+        return (
+            jsonify(
+                {
+                    "error": "Ảnh chưa đạt yêu cầu chất lượng. Vui lòng chụp lại theo gợi ý.",
+                    "quality": quality,
+                }
+            ),
+            422,
+        )
     features = None
     try:
         extractor = get_feature_extractor()
@@ -41,6 +54,7 @@ def analyze():
     out.setdefault("_meta", {})
     out["_meta"].setdefault("image", {})
     out["_meta"]["image"].update({"mime": mime, "size_bytes": size_bytes})
+    out["_meta"]["image_quality"] = quality
     if features:
         out["_meta"]["image_features"] = features
     return jsonify(out), 200
