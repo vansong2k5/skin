@@ -3,94 +3,777 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Da Liễu Demo</title>
+  <title>Trợ lý Da Liễu AI</title>
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; }
-    textarea, input, button { width: 100%; margin: 8px 0; padding: 8px; }
-    #result { border: 1px solid #ccc; padding: 10px; margin-top: 15px; background: #fafafa; }
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --accent: #14b8a6;
+      --background: #0f172a;
+      --card-bg: #ffffff;
+      --muted: #64748b;
+      --border: rgba(15, 23, 42, 0.08);
+      --success: #0f766e;
+      --warning: #b45309;
+      --error: #b91c1c;
+      font-size: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.2), transparent 50%),
+        radial-gradient(circle at 80% 0%, rgba(20, 184, 166, 0.2), transparent 50%),
+        linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+      color: #0f172a;
+      min-height: 100vh;
+    }
+
+    .app-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 48px 24px 64px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .hero h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 700;
+      color: var(--background);
+    }
+
+    .hero p {
+      margin: 0 auto;
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: 0 25px 70px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--border);
+      padding: 32px;
+    }
+
+    .panel--form {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .panel--info h2 {
+      margin-top: 0;
+      font-size: 1.4rem;
+      color: var(--background);
+    }
+
+    .panel--info ul {
+      padding-left: 20px;
+      margin: 12px 0 24px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .field label {
+      display: block;
+      font-weight: 600;
+      color: var(--background);
+      margin-bottom: 8px;
+    }
+
+    .field textarea,
+    .field input[type="text"],
+    .field input[type="file"],
+    .field button,
+    .field select {
+      font: inherit;
+    }
+
+    textarea {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      resize: vertical;
+      min-height: 110px;
+      background: #f8fafc;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: rgba(37, 99, 235, 0.4);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+    }
+
+    .file-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 999px;
+      border: none;
+      padding: 12px 22px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn[disabled] {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: 0 12px 20px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn-primary:hover:not([disabled]) {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 30px rgba(37, 99, 235, 0.28);
+    }
+
+    .btn-secondary {
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(37, 99, 235, 0.15);
+    }
+
+    .btn-ghost {
+      background: rgba(15, 23, 42, 0.05);
+      color: var(--background);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(15, 23, 42, 0.1);
+    }
+
+    .helper {
+      margin: 6px 0 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .preview {
+      border: 1px dashed rgba(37, 99, 235, 0.3);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(37, 99, 235, 0.05);
+    }
+
+    .preview--hidden {
+      display: none;
+    }
+
+    .preview img {
+      width: 100%;
+      border-radius: 16px;
+      max-height: 320px;
+      object-fit: cover;
+    }
+
+    .privacy-tip {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel--result {
+      border-radius: 20px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      padding: 24px;
+      background: #f8fafc;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    #result[data-state="loading"] {
+      border-color: rgba(37, 99, 235, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.15);
+    }
+
+    #result[data-state="success"] {
+      border-color: rgba(20, 184, 166, 0.5);
+      box-shadow: inset 0 0 0 1px rgba(20, 184, 166, 0.15);
+    }
+
+    #result[data-state="warning"] {
+      border-color: rgba(180, 83, 9, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.1);
+    }
+
+    #result[data-state="error"] {
+      border-color: rgba(185, 28, 28, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.1);
+    }
+
+    #result h3 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--background);
+    }
+
+    #result p,
+    #result li {
+      color: #1f2937;
+      line-height: 1.6;
+    }
+
+    #result ul {
+      padding-left: 20px;
+      margin: 8px 0 0;
+    }
+
+    .quality-card {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 16px;
+      background: white;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .quality-card h4 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: var(--background);
+    }
+
+    .quality-card dl {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 16px;
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .quality-card dt {
+      font-weight: 600;
+    }
+
+    .quality-card dd {
+      margin: 0;
+      text-align: right;
+    }
+
+    .privacy-card {
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(20, 184, 166, 0.12));
+      padding: 20px;
+    }
+
+    .privacy-card h3 {
+      margin: 0 0 12px;
+      font-size: 1.1rem;
+      color: var(--background);
+    }
+
+    .privacy-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+
+    .camera {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.6);
+      z-index: 100;
+    }
+
+    .camera--hidden {
+      display: none;
+    }
+
+    .camera__content {
+      background: #0f172a;
+      color: white;
+      border-radius: 24px;
+      padding: 24px;
+      width: min(520px, 90vw);
+      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.4);
+      display: grid;
+      gap: 16px;
+    }
+
+    .camera__content h2 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+
+    .camera__content video {
+      width: 100%;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .camera__actions {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+    }
+
+    .camera__hint {
+      margin: 0;
+      font-size: 0.9rem;
+      color: rgba(226, 232, 240, 0.85);
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .panel--info {
+        order: -1;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .app-shell {
+        padding: 32px 16px 48px;
+      }
+
+      .panel {
+        padding: 24px;
+      }
+
+      .preview img {
+        max-height: 240px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h2>🧠 Phân tích da bằng AI</h2>
+  <div class="app-shell">
+    <header class="hero">
+      <h1>Trợ lý Da Liễu AI</h1>
+      <p>
+        Gửi mô tả và hình ảnh vùng da để nhận phân tích sơ bộ, gợi ý bước chăm sóc tiếp theo.
+        Ảnh của bạn được làm sạch thông tin định vị và chỉ dùng cho phiên làm việc hiện tại.
+      </p>
+    </header>
 
-  <form id="skin-form">
-    <label>Mô tả triệu chứng:</label>
-    <textarea id="desc" rows="4" placeholder="Ví dụ: xuất hiện mụn đỏ, ngứa quanh mũi..."></textarea>
+    <main class="layout">
+      <section class="panel panel--form">
+        <form id="skin-form" novalidate>
+          <div class="field">
+            <label for="desc">Mô tả triệu chứng</label>
+            <textarea id="desc" rows="4" placeholder="Ví dụ: nổi mẩn đỏ quanh má, ngứa rát buổi tối..." required></textarea>
+            <p class="helper">Càng mô tả chi tiết về thời gian xuất hiện, cảm giác và tiền sử càng giúp AI đưa ra gợi ý chính xác.</p>
+          </div>
 
-    <label>Chọn ảnh vùng da:</label>
-    <input type="file" id="image" accept="image/*">
+          <div class="field">
+            <label for="image">Ảnh vùng da</label>
+            <div class="file-actions">
+              <label class="btn btn-secondary" id="file-trigger">
+                📁 Chọn ảnh
+                <input type="file" id="image" accept="image/*" />
+              </label>
+              <button type="button" id="open-camera" class="btn btn-ghost">📸 Chụp ảnh</button>
+            </div>
+            <p class="helper" id="file-helper">Hãy chọn ảnh rõ nét, ánh sáng đều, tập trung vào vùng da gặp vấn đề.</p>
+          </div>
 
-    <button type="submit">Phân tích</button>
-  </form>
+          <div id="preview-wrapper" class="preview preview--hidden" aria-live="polite">
+            <img id="preview-image" alt="Ảnh xem trước đã được làm sạch dữ liệu" />
+            <button type="button" id="remove-image" class="btn btn-ghost">Chọn ảnh khác</button>
+          </div>
 
-  <div id="result">Kết quả sẽ hiển thị ở đây...</div>
+          <div class="field">
+            <button type="submit" class="btn btn-primary" id="submit-btn">Phân tích</button>
+          </div>
+
+          <p class="privacy-tip">🔒 Ảnh được nén và xóa toàn bộ thông tin EXIF ngay trong trình duyệt trước khi gửi.</p>
+        </form>
+
+        <section id="result" class="panel--result" aria-live="polite" data-state="idle">
+          <h3>Chờ thông tin từ bạn</h3>
+          <p>Điền mô tả và tải ảnh để nhận phân tích sơ bộ trong vài giây.</p>
+        </section>
+      </section>
+
+      <aside class="panel panel--info">
+        <h2>Lời khuyên chụp ảnh</h2>
+        <ul>
+          <li>Chụp trong không gian đủ sáng, tránh ánh sáng quá gắt.</li>
+          <li>Giữ máy ổn định, lấy nét vào vùng da cần tư vấn.</li>
+          <li>Không sử dụng bộ lọc làm mờ hoặc chỉnh màu quá mạnh.</li>
+        </ul>
+
+        <div class="privacy-card">
+          <h3>Cam kết quyền riêng tư</h3>
+          <ul>
+            <li>Ảnh được làm sạch EXIF và chỉ lưu tạm thời để phân tích.</li>
+            <li>Thông tin không được gửi đến bên thứ ba ngoài mô hình AI phục vụ chẩn đoán.</li>
+            <li>Bạn luôn có thể xóa hoặc chụp lại trước khi gửi.</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="camera-modal" class="camera camera--hidden" role="dialog" aria-modal="true" aria-labelledby="camera-title">
+    <div class="camera__content">
+      <h2 id="camera-title">Chụp ảnh vùng da</h2>
+      <video id="camera-stream" autoplay playsinline></video>
+      <canvas id="camera-canvas" class="camera__canvas" hidden></canvas>
+      <div class="camera__actions">
+        <button type="button" id="capture-btn" class="btn btn-primary">📸 Chụp</button>
+        <button type="button" id="close-camera" class="btn btn-ghost">Đóng</button>
+      </div>
+      <p class="camera__hint">Giữ máy ổn định, cách da 10-15cm và đảm bảo ánh sáng đều.</p>
+    </div>
+  </div>
 
   <script>
-  const API_BASE = "http://127.0.0.1:5001";  // 🔧 sửa port 5000 → 5001
+    const API_BASE = "http://127.0.0.1:5001"; // 🔧 sử dụng chung với backend Flask
 
-  // Hàm nén ảnh nhanh
-  async function compressImage(file, maxW = 1024, quality = 0.82) {
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-    await img.decode();
-    const scale = Math.min(1, maxW / img.naturalWidth);
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(img.naturalWidth * scale);
-    canvas.height = Math.round(img.naturalHeight * scale);
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        resolve(new File([blob], file.name.replace(/\.\w+$/, '') + ".jpg", { type: "image/jpeg" }));
-      }, "image/jpeg", quality);
-    });
-  }
+    // Trạng thái toàn cục
+    let sanitizedFile = null;
+    let previewUrl = null;
+    let mediaStream = null;
 
-  document.getElementById("skin-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const btn = e.submitter;
-    const desc = document.getElementById("desc").value.trim();
-    const file = document.getElementById("image").files[0];
-    const result = document.getElementById("result");
+    // Phần tử DOM
+    const form = document.getElementById("skin-form");
+    const descInput = document.getElementById("desc");
+    const fileInput = document.getElementById("image");
+    const fileHelper = document.getElementById("file-helper");
+    const submitBtn = document.getElementById("submit-btn");
+    const resultBox = document.getElementById("result");
+    const previewWrapper = document.getElementById("preview-wrapper");
+    const previewImage = document.getElementById("preview-image");
+    const removeImageBtn = document.getElementById("remove-image");
+    const openCameraBtn = document.getElementById("open-camera");
+    const cameraModal = document.getElementById("camera-modal");
+    const cameraStream = document.getElementById("camera-stream");
+    const cameraCanvas = document.getElementById("camera-canvas");
+    const captureBtn = document.getElementById("capture-btn");
+    const closeCameraBtn = document.getElementById("close-camera");
 
-    result.textContent = "";
-    if (!desc || !file) {
-      result.textContent = "⚠️ Vui lòng nhập mô tả và chọn ảnh.";
-      return;
+    // Utility helpers
+    function escapeHtml(value) {
+      if (typeof value !== "string") return value;
+      return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
 
-    btn.disabled = true; btn.textContent = "⏳ Đang phân tích…";
+    function formatBytes(bytes) {
+      if (!bytes) return "0 B";
+      const units = ["B", "KB", "MB"];
+      const idx = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+      const value = bytes / Math.pow(1024, idx);
+      return `${value.toFixed(value < 10 && idx > 0 ? 1 : 0)} ${units[idx]}`;
+    }
 
-    try {
-      const small = await compressImage(file);
-      const fd = new FormData();
-      fd.append("description", desc);
-      fd.append("image", small, small.name);
+    function setResultState(state, html) {
+      resultBox.dataset.state = state;
+      resultBox.innerHTML = html;
+    }
 
-      const res = await fetch(`${API_BASE}/analyze`, { method: "POST", body: fd });
-      const data = await res.json();
+    function resetPreview() {
+      sanitizedFile = null;
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+      }
+      previewImage.removeAttribute("src");
+      previewWrapper.classList.add("preview--hidden");
+      fileHelper.textContent = "Hãy chọn ảnh rõ nét, ánh sáng đều, tập trung vào vùng da gặp vấn đề.";
+      fileInput.value = "";
+    }
 
-      if (!res.ok) {
-        result.textContent = data.error || `Lỗi ${res.status}`;
+    async function compressImage(file, maxW = 1024, quality = 0.85) {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      await img.decode();
+      const scale = Math.min(1, maxW / img.naturalWidth);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.naturalWidth * scale);
+      canvas.height = Math.round(img.naturalHeight * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(img.src);
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Không thể nén ảnh"));
+              return;
+            }
+            const cleanFile = new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+            resolve(cleanFile);
+          },
+          "image/jpeg",
+          quality
+        );
+      });
+    }
+
+    async function sanitizeAndPreview(file) {
+      if (!file) return null;
+      const compressed = await compressImage(file);
+      sanitizedFile = compressed;
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      previewUrl = URL.createObjectURL(compressed);
+      previewImage.src = previewUrl;
+      previewWrapper.classList.remove("preview--hidden");
+      fileHelper.textContent = `Ảnh đã được làm sạch metadata và nén còn ${formatBytes(compressed.size)}.`;
+      return compressed;
+    }
+
+    async function handleFileChange(event) {
+      const file = event.target.files?.[0];
+      if (!file) {
+        resetPreview();
+        return;
+      }
+      try {
+        await sanitizeAndPreview(file);
+      } catch (error) {
+        console.error(error);
+        resetPreview();
+        setResultState(
+          "error",
+          `<h3>Không thể đọc ảnh</h3><p>Vui lòng thử lại với định dạng JPG hoặc PNG khác.</p>`
+        );
+      }
+    }
+
+    async function openCamera() {
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        cameraStream.srcObject = mediaStream;
+        cameraModal.classList.remove("camera--hidden");
+      } catch (error) {
+        console.error(error);
+        setResultState(
+          "error",
+          `<h3>Không truy cập được máy ảnh</h3><p>Vui lòng cho phép trình duyệt sử dụng camera hoặc chọn ảnh từ thư viện.</p>`
+        );
+      }
+    }
+
+    function stopCamera() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+        mediaStream = null;
+      }
+      cameraStream.srcObject = null;
+      cameraModal.classList.add("camera--hidden");
+    }
+
+    async function capturePhoto() {
+      if (!mediaStream) return;
+      const video = cameraStream;
+      if (!video.videoWidth || !video.videoHeight) {
+        return;
+      }
+      const canvas = cameraCanvas;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (b) => {
+            if (!b) {
+              reject(new Error("Không thể chụp ảnh"));
+              return;
+            }
+            resolve(b);
+          },
+          "image/jpeg",
+          0.92
+        );
+      });
+      const capturedFile = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
+      await sanitizeAndPreview(capturedFile);
+      fileInput.value = ""; // tránh gửi file cũ
+      stopCamera();
+    }
+
+    async function submitForm(event) {
+      event.preventDefault();
+      const description = descInput.value.trim();
+      if (!description) {
+        setResultState("warning", `<h3>Thiếu mô tả</h3><p>Vui lòng chia sẻ triệu chứng của bạn chi tiết hơn.</p>`);
         return;
       }
 
-      result.innerHTML = `
-        <h3>📊 Kết quả sơ bộ</h3>
-        <p><b>Chẩn đoán khả dĩ:</b> ${data.diagnosis ?? "—"}</p>
-        <p><b>Độ tin cậy:</b> ${data.confidence ? (Math.round(data.confidence*100) + "%") : "—"}</p>
-        <p><b>Điều kiện có thể liên quan:</b> ${(data.likely_conditions || []).join(", ") || "—"}</p>
-        <p><b>Gợi ý bước tiếp theo:</b></p>
-        <ul>${(data.next_steps || []).map(s => `<li>${s}</li>`).join("") || "<li>—</li>"}</ul>
-        <small>${data.disclaimer || "⚕️ Kết quả chỉ mang tính tham khảo, không thay thế tư vấn y khoa."}</small>
-      `;
-    } catch (err) {
-      result.textContent = "❌ Lỗi mạng hoặc máy chủ. Thử lại sau.";
-      console.error(err);
-    } finally {
-      btn.disabled = false; btn.textContent = "Phân tích";
+      if (!sanitizedFile && fileInput.files[0]) {
+        try {
+          await sanitizeAndPreview(fileInput.files[0]);
+        } catch (error) {
+          console.error(error);
+          setResultState("error", `<h3>Không thể xử lý ảnh</h3><p>Vui lòng thử lại.</p>`);
+          return;
+        }
+      }
+
+      if (!sanitizedFile) {
+        setResultState("warning", `<h3>Chưa có ảnh</h3><p>Vui lòng tải lên hoặc chụp ảnh vùng da cần phân tích.</p>`);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "⏳ Đang phân tích…";
+      setResultState("loading", `<h3>Đang phân tích ảnh…</h3><p>Vui lòng chờ trong giây lát.</p>`);
+
+      try {
+        const fd = new FormData();
+        fd.append("description", description);
+        fd.append("image", sanitizedFile, sanitizedFile.name);
+
+        const response = await fetch(`${API_BASE}/analyze`, {
+          method: "POST",
+          body: fd,
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 422 && data.quality) {
+            const issues = (data.quality.issues || [])
+              .map((issue) => `<li>${escapeHtml(issue)}</li>`)
+              .join("");
+            setResultState(
+              "warning",
+              `<h3>Ảnh cần chụp lại</h3>
+               <p>${escapeHtml(data.error || "Ảnh chưa đạt yêu cầu chất lượng.")}</p>
+               ${issues ? `<ul>${issues}</ul>` : ""}`
+            );
+          } else {
+            setResultState(
+              "error",
+              `<h3>Không thể phân tích</h3><p>${escapeHtml(data.error || `Máy chủ trả về lỗi ${response.status}`)}</p>`
+            );
+          }
+          return;
+        }
+
+        const nextSteps = Array.isArray(data.next_steps)
+          ? data.next_steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")
+          : "";
+        const conditions = Array.isArray(data.likely_conditions)
+          ? data.likely_conditions.map((c) => escapeHtml(c)).join(", ")
+          : "—";
+        const confidence = data.confidence
+          ? `${Math.round(Number(data.confidence) * 100)}%`
+          : "—";
+        const disclaimer = escapeHtml(
+          data.disclaimer || "⚕️ Kết quả chỉ mang tính tham khảo, không thay thế tư vấn y khoa."
+        );
+        const quality = data._meta?.image_quality;
+        let qualityHtml = "";
+        if (quality) {
+          const metrics = quality.metrics || {};
+          qualityHtml = `
+            <div class="quality-card">
+              <h4>🔍 Đánh giá ảnh</h4>
+              <dl>
+                <dt>Kích thước</dt>
+                <dd>${metrics.width ?? "?"} × ${metrics.height ?? "?"} px</dd>
+                <dt>Độ sáng</dt>
+                <dd>${metrics.brightness ? Math.round(metrics.brightness) : "—"}</dd>
+                <dt>Độ nét</dt>
+                <dd>${metrics.focus ? metrics.focus.toFixed(1) : "—"}</dd>
+              </dl>
+            </div>`;
+        }
+
+        setResultState(
+          "success",
+          `<h3>📊 Kết quả sơ bộ</h3>
+           <p><strong>Chẩn đoán khả dĩ:</strong> ${escapeHtml(data.diagnosis ?? "—")}</p>
+           <p><strong>Độ tin cậy:</strong> ${confidence}</p>
+           <p><strong>Điều kiện liên quan:</strong> ${conditions || "—"}</p>
+           <div>
+             <p><strong>Gợi ý bước tiếp theo:</strong></p>
+             <ul>${nextSteps || "<li>Hãy theo dõi thêm triệu chứng và liên hệ bác sĩ da liễu khi cần.</li>"}</ul>
+           </div>
+           ${qualityHtml}
+           <p style="margin-top:16px; font-size:0.95rem; color:${"#475569"};">${disclaimer}</p>`
+        );
+      } catch (error) {
+        console.error(error);
+        setResultState(
+          "error",
+          `<h3>Sự cố kết nối</h3><p>Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.</p>`
+        );
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Phân tích";
+      }
     }
-  });
+
+    fileInput.addEventListener("change", handleFileChange);
+    removeImageBtn.addEventListener("click", resetPreview);
+    form.addEventListener("submit", submitForm);
+    openCameraBtn.addEventListener("click", openCamera);
+    closeCameraBtn.addEventListener("click", stopCamera);
+    captureBtn.addEventListener("click", capturePhoto);
+    window.addEventListener("beforeunload", stopCamera);
   </script>
 </body>
 </html>
