@@ -1,8 +1,9 @@
-from flask import Blueprint, request, jsonify, send_from_directory
+from flask import Blueprint, request, jsonify
 
 
 from backend.utils.image_processing import encode_image_to_base64
 from backend.models.ai_model import analyze_skin_json
+from backend.models.image_feature_extractor import get_feature_extractor
 
 # Không đặt url_prefix để URL là /healthz, /debug/ping_gemini, /analyze
 routes = Blueprint("routes", __name__)
@@ -27,10 +28,21 @@ def analyze():
     img  = request.files.get("image")
     if not desc or not img:
         return jsonify({"error": "Thiếu mô tả hoặc ảnh"}), 400
-    b64, mime, size_bytes = encode_image_to_base64(img)  # JPEG + base64 sạch
+    b64, mime, size_bytes, pil_image = encode_image_to_base64(img, return_image=True)  # JPEG + base64 sạch
     if size_bytes > 12 * 1024 * 1024:
         return jsonify({"error": "Ảnh quá lớn sau khi nén"}), 413
-    out = analyze_skin_json(desc, b64, mime)
+    features = None
+    try:
+        extractor = get_feature_extractor()
+        features = extractor.extract_features(pil_image)
+    except Exception as exc:
+        features = {"error": f"Image feature extraction failed: {exc}"}
+    out = analyze_skin_json(desc, b64, mime, image_features=features)
+    out.setdefault("_meta", {})
+    out["_meta"].setdefault("image", {})
+    out["_meta"]["image"].update({"mime": mime, "size_bytes": size_bytes})
+    if features:
+        out["_meta"]["image_features"] = features
     return jsonify(out), 200
 # @app.route("/")
 # def serve_index():
